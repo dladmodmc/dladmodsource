@@ -1,0 +1,42 @@
+{
+	"schemaVersion": 1,
+	"id": "dlad",
+	"version": "1.0",
+	"name": "dlad",
+	"description": "Dlad mod",
+	"authors": [
+		"dlad",
+		"EVC"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/dlad/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"dlad.dlad.Dlad"
+		],
+		"client": [
+			"dlad.dlad.DladClient"
+		]
+	},
+	"mixins": [
+		"dlad.mixins.json",
+		{
+			"config": "dlad.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": "*",
+		"minecraft": ">=1.21",
+		"java": "*",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
