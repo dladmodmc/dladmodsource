@@ -1,0 +1,2 @@
+Although some parts are obfuscated, this is still considered an OSS and so the same rights are given to the user (rights to use, study, change and distribute)
+Please note that this obfuscation was necessary for this type of mod as without it, making patches for it would be as simple as reading the code. Sorry for this but it will be staying like this, although this doesn't mean you cannot scan the mod for viruses, feel free to do that and see the results.
