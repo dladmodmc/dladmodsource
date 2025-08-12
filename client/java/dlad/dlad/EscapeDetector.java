@@ -23,7 +23,6 @@ public class EscapeDetector {
         //MUST be obfuscated if we need this shitty to be working for more than 3 days
         });
 
-        // 2) HUD pass: draw through‑walls 2D boxes around any entity detected within last 5s
         HudRenderCallback.EVENT.register((ctx, partial) -> {
             if (!DladClient.Config.getFeatureState(0)) return;
             if (client.player == null || client.world == null) return;
