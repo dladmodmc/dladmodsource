@@ -63,7 +63,7 @@ public class EscapeDetector {
                 int sx = (int)(((1f - ndcX) * 0.5f) * w);
                 int sy = (int)(((1f - ndcY) * 0.5f) * h);
 
-                int size = 8;
+                int size = DladClient.Config.getEscapeSize();
                 ctx.fill(
                         sx - size, sy - size,
                         sx + size, sy + size,

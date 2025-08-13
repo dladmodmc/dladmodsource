@@ -29,7 +29,7 @@ public class SausageFinder {
             float tanFOV = (float) Math.tan(fovRad / 2f);
             float aspect = (float) w / h;
 
-            BlockPos base = client.player.getBlockPos();
+            BlockPos base = BlockPos.ofFloored(camPos);
             int radiusH = DladClient.Config.getSausageRadius(), radiusV = DladClient.Config.getSausageRadius();
 
             for (int dx = -radiusH; dx <= radiusH; dx++) {
@@ -56,7 +56,7 @@ public class SausageFinder {
                         int sx = (int) (((1f - ndcX) * 0.5f) * w);
                         int sy = (int) (((1f - ndcY) * 0.5f) * h);
 
-                        int size = 10;
+                        int size = DladClient.Config.getSausageSize();
                         ctx.fill(
                                 sx - size, sy - size,
                                 sx + size, sy + size,

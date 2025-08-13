@@ -79,6 +79,7 @@ public class DladClient implements ClientModInitializer {
 		registerHud();
 		GuardDetector.register();
 		SausageFinder.register();
+		MeteorDetector.register();
 	}
 
 	static final class ModGate {
@@ -120,7 +121,7 @@ public class DladClient implements ClientModInitializer {
 
 	// ===================== Version checker =====================
 	static final class VersionCheck {
-		private static final int CURRENT_VERSION = 0; //!!!!!!!!!!!!!!!!!!!!!!!! EDIT THIS BEFORE PUSHING FOR A NEW VERSION. IT MUST BE SYNCHRONIZED WITH VERSION.TXT IN THE WEBSITE
+		private static final int CURRENT_VERSION = 1; //!!!!!!!!!!!!!!!!!!!!!!!! EDIT THIS BEFORE PUSHING FOR A NEW VERSION. IT MUST BE SYNCHRONIZED WITH VERSION.TXT IN THE WEBSITE
 
 		private static volatile boolean updateAvailable = false;
 		private static volatile boolean done = false;
@@ -207,28 +208,41 @@ public class DladClient implements ClientModInitializer {
 		public static void    setHudEnabled(boolean e) { data.hudEnabled = e; }
 		public static int     getHudPosIndex()      { return data.hudPosIndex; }
 		public static void    setHudPosIndex(int i) { data.hudPosIndex = i; }
+		public static int  getEscapeSize() { return MathHelper.clamp(data.escapeSize, 5, 20); }
+		public static void setEscapeSize(int v) { data.escapeSize = MathHelper.clamp(v, 5, 20); }
+		public static int  getGuardSize() { return MathHelper.clamp(data.guardSize, 5, 20); }
+		public static void setGuardSize(int v) { data.guardSize = MathHelper.clamp(v, 5, 20); }
+		public static int  getSausageSize() { return MathHelper.clamp(data.sausageSize, 5, 20); }
+		public static void setSausageSize(int v) { data.sausageSize = MathHelper.clamp(v, 5, 20); }
+		public static int  getMeteorSize() { return MathHelper.clamp(data.meteorSize, 5, 20); }
+		public static void setMeteorSize(int v) { data.meteorSize = MathHelper.clamp(v, 5, 20); }
 
 		private static class Data {
 			int keyCode = InputUtil.GLFW_KEY_PERIOD;
-			boolean[] states  = new boolean[]{false,false,false,false,false};
+			boolean[] states  = new boolean[]{false,false,false,false,false, false};
 			boolean   hudEnabled  = false;
 			int       hudPosIndex = 0;
 			int sausageRadius = 10;
+			int escapeSize  = 8;
+			int guardSize   = 8;
+			int sausageSize = 10;
+			int meteorSize  = 10;
 		}
 	}
 
 	private static class ChangeKeybindScreen extends Screen {
 		private ButtonWidget keyButton, hudButton, posButton;
-
+		private TextFieldWidget sizeEscapeField, sizeGuardField, sizeSausageField, sizeMeteorField;
 		private ButtonWidget updateButton;
 
 		private boolean listening;
-		static final String[] FEATURES = {"Escape Detector","Guard Finder","Autofish","Sausage finder"};
+		static final String[] FEATURES = {"Escape Detector","Guard Finder","Autofish","Sausage Finder", "Meteor Finder"};
 		private static final String[] TOOLTIPS = {
 				"Alerts of escapes and indicates the location via a marker",
 				"Marks nearby guards/detectives, the color depends on the role and distance",
 				"Point your bobber towards the water and get to work! 'Don't forget your toggle crouch!' -EVC",
-				"Marks sausage:tm: signs near you. Radius: 5-50 (10-20 recommended as lag may be present at larger numbers)"
+				"Marks sausage:tm: signs near you. Radius: 5-50 (10-20 recommended as lag may be present at larger numbers)",
+				"Shows the location of nearby meteors"
 		};
 		private static final String[] ARROWS = {"↗","↘","↙","↖"};
 		private ButtonWidget[] featureButtons;
@@ -265,6 +279,7 @@ public class DladClient implements ClientModInitializer {
 					.build());
 
 			int y2 = topY + 26;
+			int baseY = y2 + 26;
 			hudButton = addDrawableChild(ButtonWidget.builder(
 							Text.literal("HUD: ").append(Text.literal(Config.isHudEnabled()?"ON":"OFF").formatted(Config.isHudEnabled()?Formatting.GREEN:Formatting.RED)),
 							btn -> {
@@ -306,6 +321,55 @@ public class DladClient implements ClientModInitializer {
 			}
 			TextFieldWidget radiusField = getTextFieldWidget();
 			this.addDrawableChild(radiusField);
+						int gap = 5;
+			int fieldW = 40, fieldH = 20;
+			int fieldX = centerX - gap - fieldW;
+			// Escape Detector (index 0)
+			sizeEscapeField = new TextFieldWidget(this.textRenderer, fieldX, baseY, fieldW, fieldH, Text.of("Size"));
+			sizeEscapeField.setText(String.valueOf(Config.getEscapeSize()));
+			sizeEscapeField.setTextPredicate(s -> s.isEmpty() || s.matches("\\d{1,2}")); // digits only
+			sizeEscapeField.setChangedListener(s -> {
+				try {
+					int v = Integer.parseInt(s);
+					if (v >= 5 && v <= 20) { Config.setEscapeSize(v); Config.save(); }
+				} catch (NumberFormatException ignored) {}
+			});
+			this.addDrawableChild(sizeEscapeField);
+
+// Guard Finder (index 1)
+			sizeGuardField = new TextFieldWidget(this.textRenderer, fieldX, baseY + 26, fieldW, fieldH, Text.of("Size"));
+			sizeGuardField.setText(String.valueOf(Config.getGuardSize()));
+			sizeGuardField.setTextPredicate(s -> s.isEmpty() || s.matches("\\d{1,2}"));
+			sizeGuardField.setChangedListener(s -> {
+				try {
+					int v = Integer.parseInt(s);
+					if (v >= 5 && v <= 20) { Config.setGuardSize(v); Config.save(); }
+				} catch (NumberFormatException ignored) {}
+			});
+			this.addDrawableChild(sizeGuardField);
+
+// Sausage finder (index 3)
+			sizeSausageField = new TextFieldWidget(this.textRenderer, fieldX, baseY + 3*26, fieldW, fieldH, Text.of("Size"));
+			sizeSausageField.setText(String.valueOf(Config.getSausageSize()));
+			sizeSausageField.setTextPredicate(s -> s.isEmpty() || s.matches("\\d{1,2}"));
+			sizeSausageField.setChangedListener(s -> {
+				try {
+					int v = Integer.parseInt(s);
+					if (v >= 5 && v <= 20) { Config.setSausageSize(v); Config.save(); }
+				} catch (NumberFormatException ignored) {}
+			});
+			this.addDrawableChild(sizeSausageField);
+						// Meteor Detector (index 4)
+			sizeMeteorField = new TextFieldWidget(this.textRenderer, fieldX, baseY + 4*26, fieldW, fieldH, Text.of("Size"));
+			sizeMeteorField.setText(String.valueOf(Config.getMeteorSize()));
+			sizeMeteorField.setTextPredicate(s -> s.isEmpty() || s.matches("\\d{1,2}"));
+			sizeMeteorField.setChangedListener(s -> {
+				try {
+					int v = Integer.parseInt(s);
+					if (v >= 5 && v <= 20) { Config.setMeteorSize(v); Config.save(); }
+				} catch (NumberFormatException ignored) {}
+			});
+			this.addDrawableChild(sizeMeteorField);
 		}
 
 		@Override
@@ -363,7 +427,18 @@ public class DladClient implements ClientModInitializer {
 				ctx.drawTooltip(this.textRenderer, Collections.singletonList(Text.of("Toggle HUD")), mx, my);
 			if (posButton.isHovered())
 				ctx.drawTooltip(this.textRenderer, Collections.singletonList(Text.of("HUD position")), mx, my);
-
+			if (sizeEscapeField != null && sizeEscapeField.isMouseOver(mx, my)) {
+				ctx.drawTooltip(this.textRenderer, Collections.singletonList(Text.of("Change size (5–20)")), mx, my);
+			}
+			if (sizeGuardField != null && sizeGuardField.isMouseOver(mx, my)) {
+				ctx.drawTooltip(this.textRenderer, Collections.singletonList(Text.of("Change size (5–20)")), mx, my);
+			}
+			if (sizeSausageField != null && sizeSausageField.isMouseOver(mx, my)) {
+				ctx.drawTooltip(this.textRenderer, Collections.singletonList(Text.of("Change size (5–20)")), mx, my);
+			}
+			if (sizeMeteorField != null && sizeMeteorField.isMouseOver(mx, my)) {
+				ctx.drawTooltip(this.textRenderer, Collections.singletonList(Text.of("Change size (5–20)")), mx, my);
+			}
 			for (int i = 0; i < featureButtons.length; i++) {
 				if (featureButtons[i].isHovered()) {
 					String tooltipText = TOOLTIPS[i];
