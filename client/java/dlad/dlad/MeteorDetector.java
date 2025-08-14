@@ -29,9 +29,9 @@ public class MeteorDetector {
             float tanFOV = (float) Math.tan(fovRad / 2f);
             float aspect = (float) w / h;
 
-            var area = client.player.getBoundingBox().expand(256.0);
-            for (InteractionEntity e : client.world.getEntitiesByClass(InteractionEntity.class, area, ent -> true)) {
-                if (e.getBoundingBox().getLengthX() != 3.0f && e.getBoundingBox().getLengthY() != 4.0f) continue;
+            
+            Obfuscated {
+                Obfuscated
                 Vec3d target = e.getPos().add(0.0, e.getBoundingBox().getLengthY() * 0.5, 0.0);
                 Vec3d delta  = target.subtract(camPos);
                 float dx = (float) delta.x, dy = (float) delta.y, dz = (float) delta.z;
