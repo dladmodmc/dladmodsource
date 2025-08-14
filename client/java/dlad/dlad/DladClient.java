@@ -203,6 +203,12 @@ public class DladClient implements ClientModInitializer {
 		public static void setSausageRadius(int r) {
 			data.sausageRadius = MathHelper.clamp(r, 5, 50);
 		}
+		public static int getMeteorRadius() {
+			return data.meteorRadius;
+		}
+		public static void setMeteorRadius(int r) {
+			data.meteorRadius = MathHelper.clamp(r, 50, 250);
+		}
 
 		public static boolean isHudEnabled()        { return data.hudEnabled; }
 		public static void    setHudEnabled(boolean e) { data.hudEnabled = e; }
@@ -226,13 +232,15 @@ public class DladClient implements ClientModInitializer {
 			int escapeSize  = 8;
 			int guardSize   = 8;
 			int sausageSize = 10;
-			int meteorSize  = 10;
+			int meteorSize  = 5;
+			int meteorRadius = 256;
 		}
 	}
 
 	private static class ChangeKeybindScreen extends Screen {
 		private ButtonWidget keyButton, hudButton, posButton;
 		private TextFieldWidget sizeEscapeField, sizeGuardField, sizeSausageField, sizeMeteorField;
+				private TextFieldWidget meteorRadiusField;
 		private ButtonWidget updateButton;
 
 		private boolean listening;
@@ -242,7 +250,7 @@ public class DladClient implements ClientModInitializer {
 				"Marks nearby guards/detectives, the color depends on the role and distance",
 				"Point your bobber towards the water and get to work! 'Don't forget your toggle crouch!' -EVC",
 				"Marks sausage:tm: signs near you. Radius: 5-50 (10-20 recommended as lag may be present at larger numbers)",
-				"Shows the location of nearby meteors"
+				"Shows the location of nearby meteors. Radius 100-256 (Low performance loss, go crazy with the radius)"
 		};
 		private static final String[] ARROWS = {"↗","↘","↙","↖"};
 		private ButtonWidget[] featureButtons;
@@ -321,13 +329,15 @@ public class DladClient implements ClientModInitializer {
 			}
 			TextFieldWidget radiusField = getTextFieldWidget();
 			this.addDrawableChild(radiusField);
-						int gap = 5;
+
+			int gap = 5;
 			int fieldW = 40, fieldH = 20;
 			int fieldX = centerX - gap - fieldW;
-			// Escape Detector (index 0)
+
+			// Escape size
 			sizeEscapeField = new TextFieldWidget(this.textRenderer, fieldX, baseY, fieldW, fieldH, Text.of("Size"));
 			sizeEscapeField.setText(String.valueOf(Config.getEscapeSize()));
-			sizeEscapeField.setTextPredicate(s -> s.isEmpty() || s.matches("\\d{1,2}")); // digits only
+			sizeEscapeField.setTextPredicate(s -> s.isEmpty() || s.matches("\\d{1,2}"));
 			sizeEscapeField.setChangedListener(s -> {
 				try {
 					int v = Integer.parseInt(s);
@@ -336,7 +346,7 @@ public class DladClient implements ClientModInitializer {
 			});
 			this.addDrawableChild(sizeEscapeField);
 
-// Guard Finder (index 1)
+			// Guard size
 			sizeGuardField = new TextFieldWidget(this.textRenderer, fieldX, baseY + 26, fieldW, fieldH, Text.of("Size"));
 			sizeGuardField.setText(String.valueOf(Config.getGuardSize()));
 			sizeGuardField.setTextPredicate(s -> s.isEmpty() || s.matches("\\d{1,2}"));
@@ -348,7 +358,7 @@ public class DladClient implements ClientModInitializer {
 			});
 			this.addDrawableChild(sizeGuardField);
 
-// Sausage finder (index 3)
+			// Sausage size
 			sizeSausageField = new TextFieldWidget(this.textRenderer, fieldX, baseY + 3*26, fieldW, fieldH, Text.of("Size"));
 			sizeSausageField.setText(String.valueOf(Config.getSausageSize()));
 			sizeSausageField.setTextPredicate(s -> s.isEmpty() || s.matches("\\d{1,2}"));
@@ -359,7 +369,8 @@ public class DladClient implements ClientModInitializer {
 				} catch (NumberFormatException ignored) {}
 			});
 			this.addDrawableChild(sizeSausageField);
-						// Meteor Detector (index 4)
+
+			// Meteor size
 			sizeMeteorField = new TextFieldWidget(this.textRenderer, fieldX, baseY + 4*26, fieldW, fieldH, Text.of("Size"));
 			sizeMeteorField.setText(String.valueOf(Config.getMeteorSize()));
 			sizeMeteorField.setTextPredicate(s -> s.isEmpty() || s.matches("\\d{1,2}"));
@@ -370,6 +381,21 @@ public class DladClient implements ClientModInitializer {
 				} catch (NumberFormatException ignored) {}
 			});
 			this.addDrawableChild(sizeMeteorField);
+
+			// NEW: Meteor radius (to the RIGHT of the Meteor Finder button)
+			int mrX = featureButtons[4].getX() + featureButtons[4].getWidth() + 5;
+			int mrY = featureButtons[4].getY();
+			meteorRadiusField = new TextFieldWidget(this.textRenderer, mrX, mrY, 50, 20, Text.of("Size"));
+			meteorRadiusField.setText(String.valueOf(Config.getMeteorRadius()));
+			meteorRadiusField.setTextPredicate(s -> s.isEmpty() || s.matches("\\d{1,3}")); // allow up to 3 digits
+			meteorRadiusField.setChangedListener(s -> {
+				try {
+					int v = Integer.parseInt(s);
+					Config.setMeteorRadius(v); // clamps 50–250
+					Config.save();
+				} catch (NumberFormatException ignored) {}
+			});
+			this.addDrawableChild(meteorRadiusField);
 		}
 
 		@Override
@@ -439,6 +465,8 @@ public class DladClient implements ClientModInitializer {
 			if (sizeMeteorField != null && sizeMeteorField.isMouseOver(mx, my)) {
 				ctx.drawTooltip(this.textRenderer, Collections.singletonList(Text.of("Change size (5–20)")), mx, my);
 			}
+			if (meteorRadiusField != null && meteorRadiusField.isMouseOver(mx, my))
+				ctx.drawTooltip(this.textRenderer, Collections.singletonList(Text.of("Change radius (50–250)")), mx, my);
 			for (int i = 0; i < featureButtons.length; i++) {
 				if (featureButtons[i].isHovered()) {
 					String tooltipText = TOOLTIPS[i];

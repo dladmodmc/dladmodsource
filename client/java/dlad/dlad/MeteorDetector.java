@@ -44,31 +44,32 @@ public class MeteorDetector {
                 float cosP = (float) Math.cos(-pitch), sinP = (float) Math.sin(-pitch);
                 float y2 = dy * cosP - z1 * sinP;
                 float z2 = dy * sinP + z1 * cosP;
-                if (z2 <= 0) continue;
+                if (z2 <= 0) continue; // behind camera
 
                 float ndcX = (x1 / z2) / (tanFOV * aspect);
                 float ndcY = (y2 / z2) / tanFOV;
                 int sx = (int) (((1f - ndcX) * 0.5f) * w);
                 int sy = (int) (((1f - ndcY) * 0.5f) * h);
 
-                int size = DladClient.Config.getMeteorSize();
-                ctx.fill(
-                        sx - size, sy - size,
-                        sx + size, sy + size,
-                        0x80FF0000
-                );
+                // Colors: debris = red, gold = gold
+                int boxColor  = isDebris ? 0x80FF0000 : 0x80FFD700; // semi-transparent
+                int textColor = isDebris ? 0xFFFF0000 : 0xFFFFD700; // opaque
 
+                // Draw box
+                int size = DladClient.Config.getMeteorSize();
+                ctx.fill(sx - size, sy - size, sx + size, sy + size, boxColor);
+
+                // Draw meteor icon
                 TextRenderer tr = client.textRenderer;
                 String icon = "☄";
                 int tw = tr.getWidth(icon);
                 int th = tr.fontHeight;
-
                 ctx.drawText(
                         tr,
                         Text.literal(icon).formatted(Formatting.WHITE),
                         sx - tw / 2,
                         sy - th / 2,
-                        0xFFFF0000, // solid red glyph color
+                        textColor,
                         false
                 );
             }
